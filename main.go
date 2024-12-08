@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -44,5 +45,8 @@ func main() {
 	router.HandleFunc("/users", CreateUser).Methods("POST")
 	router.HandleFunc("/users/{id}", UpdateUser).Methods("PUT")
 	router.HandleFunc("/users/{id}", DeleteUser).Methods("DELETE")
+
+	//start server port 8080
+	log.Fatal(http.ListenAndServe(":8080", router))
 
 }
