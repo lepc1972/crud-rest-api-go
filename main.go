@@ -24,7 +24,7 @@ func main() {
 
 	// database connection
 	var err error
-	db, err = sql.Open("mysql", "root:12345@tcp(127.0.0.1:3306)/go_crud_api")
+	db, err = sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/go_crud_api")
 	if err != nil {
 		log.Fatal(err)
 	}
