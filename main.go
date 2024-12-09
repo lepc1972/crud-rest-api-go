@@ -44,9 +44,9 @@ func main() {
 
 	router.HandleFunc("/users", GetUsers).Methods("GET")
 	router.HandleFunc("/users/{id}", GetUser).Methods("GET")
-	router.HandleFunc("/users", CreateUser).Methods("POST")
-	router.HandleFunc("/users/{id}", UpdateUser).Methods("PUT")
-	router.HandleFunc("/users/{id}", DeleteUser).Methods("DELETE")
+	//router.HandleFunc("/users", CreateUser).Methods("POST")
+	//router.HandleFunc("/users/{id}", UpdateUser).Methods("PUT")
+	//router.HandleFunc("/users/{id}", DeleteUser).Methods("DELETE")
 
 	//start server port 8080
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -94,23 +94,52 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 
 // func get user by id
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	// Obtener los parámetros de la ruta
+	// Get route parameters
 	params := mux.Vars(r)
 	id := params["id"]
 
-	// Preparar la consulta SQL
+	// Prepare the SQL query
 	var user User
 
-	// Ejecutar la consulta SQL
+	// Execute the SQL query
 	err := db.QueryRow("SELECT id, name, email, created_at FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email, &user.CreateAt)
 
-	// Manejar errores
+	// Handle errors
 	if err != nil {
-		// Si hay un error, devolver un error HTTP 500
+		// If there's an error, return an HTTP 500 error
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Encodificar el usuario como JSON y escribirlo en la respuesta
+	// Encode the user as JSON and write it to the response
 	json.NewEncoder(w).Encode(user)
+}
+
+// func create new user
+func CreateUser(w http.ResponseWriter, r *http.Request) {
+	// Parse the request body into a User object
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Prepare the SQL statement
+	stmt, err := db.Prepare("INSERT INTO users (name, email) VALUES (?, ?)")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	// Execute the SQL statement
+	_, err = stmt.Exec(user.Name, user.Email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return a success response
+	w.WriteHeader(http.StatusCreated)
 }
