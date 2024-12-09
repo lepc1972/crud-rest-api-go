@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -40,6 +41,7 @@ func main() {
 	router := mux.NewRouter()
 
 	// api routes
+
 	router.HandleFunc("/users", GetUsers).Methods("GET")
 	router.HandleFunc("/users/{id}", GetUser).Methods("GET")
 	router.HandleFunc("/users", CreateUser).Methods("POST")
@@ -49,4 +51,43 @@ func main() {
 	//start server port 8080
 	log.Fatal(http.ListenAndServe(":8080", router))
 
+}
+
+// func get all users
+// func get all users
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+	// Declare an empty slice to store user objects
+	var users []User
+
+	// Execute a SQL query to select user data
+	rows, err := db.Query("SELECT id, name, email, created_at FROM users")
+
+	// Check for errors during query execution
+	if err != nil {
+		// Return an HTTP error with the error message and a 500 Internal Server Error status
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Defer closing the rows until the function returns
+	defer rows.Close()
+
+	// Iterate through each row returned by the query
+	for rows.Next() {
+		// Create a new User object to store the current row's data
+		var user User
+
+		// Scan the current row's data into the User object
+		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.CreateAt); err != nil {
+			// Return an HTTP error if there's an issue scanning data
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Append the scanned User object to the users slice
+		users = append(users, user)
+	}
+
+	// Encode the users slice as JSON and write it to the response writer
+	json.NewEncoder(w).Encode(users)
 }
