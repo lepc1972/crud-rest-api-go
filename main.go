@@ -44,9 +44,9 @@ func main() {
 
 	router.HandleFunc("/users", GetUsers).Methods("GET")
 	router.HandleFunc("/users/{id}", GetUser).Methods("GET")
-	//router.HandleFunc("/users", CreateUser).Methods("POST")
-	//router.HandleFunc("/users/{id}", UpdateUser).Methods("PUT")
-	//router.HandleFunc("/users/{id}", DeleteUser).Methods("DELETE")
+	router.HandleFunc("/users", CreateUser).Methods("POST")
+	router.HandleFunc("/users/{id}", UpdateUser).Methods("PUT")
+	router.HandleFunc("/users/{id}", DeleteUser).Methods("DELETE")
 
 	//start server port 8080
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -142,4 +142,69 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Return a success response
 	w.WriteHeader(http.StatusCreated)
+}
+
+// func update user
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	// Get route parameters
+	params := mux.Vars(r)
+	id := params["id"]
+
+	// Parse the request body into a User object
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		// If there's an error parsing the JSON, return a bad request error
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Prepare the SQL statement
+	stmt, err := db.Prepare("UPDATE users SET name = ?, email = ? WHERE id = ?")
+	if err != nil {
+		// If there's an error preparing the statement, return an internal server error
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Clean up the statement when we're done
+	defer stmt.Close()
+
+	// Execute the SQL statement
+	_, err = stmt.Exec(user.Name, user.Email, id)
+	if err != nil {
+		// If there's an error executing the statement, return an internal server error
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return a success response
+	w.WriteHeader(http.StatusOK)
+}
+
+// func delete user
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	// Get route parameters
+	params := mux.Vars(r)
+	id := params["id"]
+
+	// Prepare the SQL statement
+	stmt, err := db.Prepare("DELETE FROM users WHERE id = ?")
+	if err != nil {
+		// If there's an error preparing the statement, return an internal server error
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Clean up the statement when we're done
+	defer stmt.Close()
+
+	// Execute the SQL statement
+	_, err = stmt.Exec(id)
+	if err != nil {
+		// If there's an error executing the statement, return an internal server error
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return a success response
+	w.WriteHeader(http.StatusOK)
 }
