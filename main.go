@@ -91,3 +91,26 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	// Encode the users slice as JSON and write it to the response writer
 	json.NewEncoder(w).Encode(users)
 }
+
+// func get user by id
+func GetUser(w http.ResponseWriter, r *http.Request) {
+	// Obtener los parámetros de la ruta
+	params := mux.Vars(r)
+	id := params["id"]
+
+	// Preparar la consulta SQL
+	var user User
+
+	// Ejecutar la consulta SQL
+	err := db.QueryRow("SELECT id, name, email, created_at FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email, &user.CreateAt)
+
+	// Manejar errores
+	if err != nil {
+		// Si hay un error, devolver un error HTTP 500
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Encodificar el usuario como JSON y escribirlo en la respuesta
+	json.NewEncoder(w).Encode(user)
+}
